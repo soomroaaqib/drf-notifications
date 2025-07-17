@@ -2,7 +2,11 @@
 
 ## 1.9.0
 
-  - Added URLs for actor, target and action_object in the unread notification list API view
+  - Added support for Django 5.0, 5.1, and 5.2
+  - Added support for Python 3.12 and 3.13
+  - Dropped support for Django < 4.2
+  - Dropped support for Python < 3.9
+  - Fixed distutils deprecation
 
 ## 1.8.3
 
