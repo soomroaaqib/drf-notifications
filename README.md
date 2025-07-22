@@ -455,7 +455,7 @@ inherit and extend the `AbstractNotification` model, example:
 #In your_app/models.py
 
 from django.db import models
-from notifications.base.models import AbstractNotification
+from notifications.models import AbstractNotification
 
 
 class Notification(AbstractNotification):

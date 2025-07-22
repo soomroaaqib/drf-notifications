@@ -1,5 +1,5 @@
 from django.db import models
-from notifications.base.models import AbstractNotification
+from notifications.models import AbstractNotification
 
 
 class Notification(AbstractNotification):
