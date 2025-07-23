@@ -46,7 +46,7 @@ Spec: <http://activitystrea.ms/specs/atom/1.0/>
 Installation is easy using `pip` and will install all required
 libraries.
 ```bash
-$ pip install django-notifications-hq
+$ pip install drf-notifications
 ```
 or get it from source
 
@@ -54,7 +54,7 @@ or get it from source
 $ git clone https://github.com/django-notifications/django-notifications
 $ cd django-notifications
 $ python setup.py sdist
-$ pip install dist/django-notifications-hq*
+$ pip install dist/drf-notifications*
 ```
 
 Note that [django-model-utils](http://pypi.python.org/pypi/django-model-utils)

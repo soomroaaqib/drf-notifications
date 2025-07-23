@@ -18,14 +18,14 @@ with open('notifications/__init__.py', 'rb') as f:
 
 
 setup(
-    name='django-notifications-hq',
+    name='drf-notifications',
     version=version,
     description='GitHub notifications alike app for Django.',
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     author='django-notifications team',
     author_email='yang@yangyubo.com',
-    url='http://github.com/django-notifications/django-notifications',
+    url='https://github.com/soomroaaqib/drf-notifications.git',
     install_requires=[
         'django>=4.2,<5.3',
         'django-model-utils>=3.1.0',
@@ -40,8 +40,6 @@ setup(
     ],
     packages=[
         'notifications',
-        'notifications.base',
-        'notifications.templatetags',
         'notifications.migrations',
     ],
     include_package_data=True,
@@ -69,5 +67,5 @@ setup(
         'Topic :: Utilities'
     ],
     keywords='django notifications github action event stream',
-    license='MIT',
+    license='BSD',
 )
