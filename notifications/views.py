@@ -33,7 +33,7 @@ class NotificationViewSet(
             raise ImportError(msg)
 
     def get_queryset(self):
-        queryset = self.request.user.notifications
+        queryset = Notification.objects.filter(recipient=self.request.user)
 
         if self.action in ("list", "count"):
             if notification_settings.get_config()['SOFT_DELETE']:
