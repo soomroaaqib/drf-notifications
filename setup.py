@@ -66,6 +66,6 @@ setup(
         'Programming Language :: Python :: 3.13',
         'Topic :: Utilities'
     ],
-    keywords='django notifications github action event stream',
+    keywords='django notifications github action event stream drf rest_framework api',
     license='BSD',
 )
