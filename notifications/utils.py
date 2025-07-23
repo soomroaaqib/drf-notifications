@@ -13,3 +13,7 @@ def slug2id(slug):
 
 def id2slug(notification_id):
     return notification_id + 110909
+
+
+def get_content_type_key(content_type):
+    return f"{content_type.app_label.lower()}_{content_type.model.lower()}"
