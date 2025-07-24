@@ -9,8 +9,8 @@ CONFIG_DEFAULTS = {
     'CACHE_TIMEOUT': 2,
     'NOTIFICATIONS_SERIALIZER': 'notifications.serializers.NotificationSerializer',
     'ACTOR_OBJECT_IN_RESPONSE': False,
-    'ACTION_OBJECT_IN_RESPONSE': True,
-    'TARGET_OBJECT_IN_RESPONSE': True,
+    'ACTION_OBJECT_IN_RESPONSE': False,
+    'TARGET_OBJECT_IN_RESPONSE': False,
 }
 
 
