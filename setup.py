@@ -24,14 +24,15 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     author='django-notifications team',
-    author_email='yang@yangyubo.com',
+    author_email='soomroaaqib55@gmail.com',
     url='https://github.com/soomroaaqib/drf-notifications.git',
     install_requires=[
-        'django>=4.2,<5.3',
+        'django>=4.2',
         'django-model-utils>=3.1.0',
         'jsonfield>=2.1.0',
         'swapper',
-        "packaging"
+        "packaging",
+        "djangorestframework==3.16.0",
     ],
     test_requires=[
         'django>=3.2',
