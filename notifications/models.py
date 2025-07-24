@@ -26,8 +26,6 @@ if parse_version(get_version()) >= parse_version('1.8.0'):
 else:
     from django.contrib.contenttypes.generic import GenericForeignKey  # noqa
 
-EXTRA_DATA = notifications_settings.get_config()['USE_JSONFIELD']
-
 
 def is_soft_delete():
     return notifications_settings.get_config()['SOFT_DELETE']
@@ -320,6 +318,8 @@ def notify_handler(verb, **kwargs):
     Handler function to create Notification instance upon action signal call.
     """
     # Pull the options out of kwargs
+    Notification = load_model('notifications', 'Notification')
+
     kwargs.pop('signal', None)
     recipient = kwargs.pop('recipient')
     actor = kwargs.pop('sender')
@@ -330,7 +330,6 @@ def notify_handler(verb, **kwargs):
     public = bool(kwargs.pop('public', True))
     description = kwargs.pop('description', None)
     timestamp = kwargs.pop('timestamp', timezone.now())
-    Notification = load_model('notifications', 'Notification')
     level = kwargs.pop('level', Notification.LEVELS.info)
     actor_for_concrete_model = kwargs.pop('actor_for_concrete_model', True)
 
@@ -364,15 +363,17 @@ def notify_handler(verb, **kwargs):
                 setattr(newnotify, '%s_content_type' % opt,
                         ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model))
 
-        if kwargs and EXTRA_DATA:
+        if kwargs:
             # set kwargs as model column if available
             for key in list(kwargs.keys()):
-                if hasattr(newnotify, key):
+                if hasattr(Notification, key):
                     setattr(newnotify, key, kwargs.pop(key))
             newnotify.data = kwargs
 
         newnotify.save()
         new_notifications.append(newnotify)
+
+    # TODO: Send Django Channels WebSocket Signal here
 
     return new_notifications
 
