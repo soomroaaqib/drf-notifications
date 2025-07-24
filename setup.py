@@ -32,7 +32,7 @@ setup(
         'jsonfield>=2.1.0',
         'swapper',
         "packaging",
-        "djangorestframework==3.16.0",
+        "djangorestframework~=3.16.0",
     ],
     test_requires=[
         'django>=3.2',
@@ -69,4 +69,12 @@ setup(
     ],
     keywords='django notifications github action event stream drf rest_framework api',
     license='BSD',
+    extras_require={
+        'socket': [
+            'channels[daphne]~=4.2.2',
+        ],
+        'push': [
+            'django-push-notifications==3.2.1',
+        ],
+    },
 )

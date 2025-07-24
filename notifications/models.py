@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django import get_version
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -18,6 +20,7 @@ from swapper import load_model
 from swapper import swappable_setting
 
 from notifications import settings as notifications_settings
+from notifications.settings import get_config
 from notifications.signals import notify
 from notifications.utils import id2slug
 
@@ -343,6 +346,7 @@ def notify_handler(verb, **kwargs):
 
     new_notifications = []
 
+    channel_layer = get_channel_layer()
     for recipient in recipients:
         newnotify = Notification(
             recipient=recipient,
@@ -371,9 +375,22 @@ def notify_handler(verb, **kwargs):
             newnotify.data = kwargs
 
         newnotify.save()
-        new_notifications.append(newnotify)
 
-    # TODO: Send Django Channels WebSocket Signal here
+        # Send Django Channels WebSocket Signal here
+        user_key = f"user_{newnotify.recipient.id}"
+        for key in get_config()["SOCKET_EXTRA_KEYS"]:
+            if value := getattr(newnotify, key, None):
+                user_key += f"_{value}"
+
+        async_to_sync(channel_layer.group_send)(
+            user_key,
+            {
+                'type': 'notify',
+                'message': "New notifications.",
+            }
+        )
+
+        new_notifications.append(newnotify)
 
     return new_notifications
 
@@ -387,4 +404,3 @@ class Notification(AbstractNotification):
 
 # connect the signal
 notify.connect(notify_handler, dispatch_uid='notifications.models.notification')
-
