@@ -24,6 +24,8 @@ from notifications.settings import get_config
 from notifications.signals import notify
 from notifications.utils import id2slug
 
+from push_notifications.models import GCMDevice
+
 if parse_version(get_version()) >= parse_version('1.8.0'):
     from django.contrib.contenttypes.fields import GenericForeignKey  # noqa
 else:
@@ -389,6 +391,11 @@ def notify_handler(verb, **kwargs):
                 'message': "New notifications.",
             }
         )
+
+        # FCM
+        device = GCMDevice.objects.filter(user_id=newnotify.recipient.id).first()
+        if device:
+            device.send_message(newnotify.verb)
 
         new_notifications.append(newnotify)
 
