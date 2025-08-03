@@ -25,10 +25,12 @@ class NotificationConsumer(WebsocketConsumer):
             return None
 
     def connect(self):
-        user, validated_token = self.authenticate()
-        if user is None:
+        auth = self.authenticate()
+        if auth is None:
             self.close()
             return
+
+        user, validated_token = auth
 
         self.user_key = f"user_{user.id}"
 
