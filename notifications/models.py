@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
+import json
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django import get_version
@@ -322,6 +324,8 @@ def notify_handler(verb, **kwargs):
     """
     Handler function to create Notification instance upon action signal call.
     """
+    from notifications.serializers import NotificationSerializer
+
     # Pull the options out of kwargs
     Notification = load_model('notifications', 'Notification')
 
@@ -384,18 +388,26 @@ def notify_handler(verb, **kwargs):
             if value := getattr(newnotify, key, None):
                 user_key += f"_{value}"
 
+        newnotify_data = NotificationSerializer(newnotify).data
         async_to_sync(channel_layer.group_send)(
             user_key,
             {
                 'type': 'notify',
-                'message': "New notifications.",
+                'message': json.dumps(newnotify_data),
             }
         )
 
         # FCM
         device = GCMDevice.objects.filter(user_id=newnotify.recipient.id).first()
         if device:
-            device.send_message(newnotify.verb)
+            for key in newnotify_data.keys():
+                newnotify_data[key] = str(newnotify_data[key])
+
+            device.send_message(
+                title=newnotify.verb,
+                message=newnotify.description,
+                extra=newnotify_data,
+            )
 
         new_notifications.append(newnotify)
 
