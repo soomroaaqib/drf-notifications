@@ -20,6 +20,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     action_object_key = serializers.SerializerMethodField()
     target_key = serializers.SerializerMethodField()
     actor_key = serializers.SerializerMethodField()
+    data = serializers.JSONField()
 
     if get_config()["ACTOR_OBJECT_IN_RESPONSE"]:
         actor = serializers.SerializerMethodField()
