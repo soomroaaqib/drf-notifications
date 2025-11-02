@@ -374,11 +374,15 @@ def notify_handler(verb, **kwargs):
                         ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model))
 
         if kwargs:
+            # Copy keyword args
+            new_kwargs = kwargs.copy()
+
             # set kwargs as model column if available
-            for key in list(kwargs.keys()):
+            for key in list(new_kwargs.keys()):
                 if hasattr(Notification, key):
-                    setattr(newnotify, key, kwargs.pop(key))
-            newnotify.data = kwargs
+                    setattr(newnotify, key, new_kwargs.pop(key))
+
+            newnotify.data = new_kwargs
 
         newnotify.save()
 
