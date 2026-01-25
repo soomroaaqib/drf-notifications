@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(blank=True, null=True, verbose_name='description')),
                 ('target_object_id', models.CharField(blank=True, max_length=255, null=True, verbose_name='target object id')),
                 ('action_object_object_id', models.CharField(blank=True, max_length=255, null=True, verbose_name='action object object id')),
-                ('timestamp', models.DateTimeField(db_index=True, default=django.utils.timezone.now, verbose_name='timestamp')),
+                ('timestamp', models.DateTimeField(db_index=True, default=django.utils.timezone.localtime, verbose_name='timestamp')),
                 ('public', models.BooleanField(db_index=True, default=True, verbose_name='public')),
                 ('deleted', models.BooleanField(db_index=True, default=False, verbose_name='deleted')),
                 ('emailed', models.BooleanField(db_index=True, default=False, verbose_name='emailed')),

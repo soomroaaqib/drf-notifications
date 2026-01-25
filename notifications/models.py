@@ -221,7 +221,7 @@ class AbstractNotification(models.Model):
     action_object = GenericForeignKey('action_object_content_type', 'action_object_object_id')
     action_object.short_description = _('action object')
 
-    timestamp = models.DateTimeField(_('timestamp'), default=timezone.now, db_index=True)
+    timestamp = models.DateTimeField(_('timestamp'), default=timezone.localtime, db_index=True)
 
     public = models.BooleanField(_('public'), default=True, db_index=True)
     deleted = models.BooleanField(_('deleted'), default=False, db_index=True)
