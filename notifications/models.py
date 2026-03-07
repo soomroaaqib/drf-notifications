@@ -13,6 +13,7 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from firebase_admin import messaging
 from jsonfield.fields import JSONField
 from model_utils import Choices
 from packaging.version import (
@@ -408,21 +409,20 @@ def notify_handler(verb, **kwargs):
                 newnotify_data[key] = str(newnotify_data[key])
 
             device.send_message(
-                title=newnotify.verb,
-                message=newnotify.description,
-                extra=newnotify_data,
-            )
-
-        # APNS
-        device = APNSDevice.objects.filter(user_id=newnotify.recipient.id).first()
-        if device:
-            for key in newnotify_data.keys():
-                newnotify_data[key] = str(newnotify_data[key])
-
-            device.send_message(
-                title=newnotify.verb,
-                message=newnotify.description,
-                extra=newnotify_data,
+                messaging.Message(
+                    notification=messaging.Notification(
+                        title=newnotify.verb,
+                        body=newnotify.description
+                    ),
+                    apns=messaging.APNSConfig(
+                        payload=messaging.APNSPayload(
+                            aps=messaging.Aps(
+                                sound="default",
+                                badge=1
+                            )
+                        )
+                    )
+                )
             )
 
         new_notifications.append(newnotify)
