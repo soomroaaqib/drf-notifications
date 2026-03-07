@@ -26,7 +26,7 @@ from notifications.settings import get_config
 from notifications.signals import notify
 from notifications.utils import id2slug
 
-from push_notifications.models import GCMDevice
+from push_notifications.models import GCMDevice, APNSDevice
 
 if parse_version(get_version()) >= parse_version('1.8.0'):
     from django.contrib.contenttypes.fields import GenericForeignKey  # noqa
@@ -401,8 +401,20 @@ def notify_handler(verb, **kwargs):
             }
         )
 
-        # FCM
+        # GCM
         device = GCMDevice.objects.filter(user_id=newnotify.recipient.id).first()
+        if device:
+            for key in newnotify_data.keys():
+                newnotify_data[key] = str(newnotify_data[key])
+
+            device.send_message(
+                title=newnotify.verb,
+                message=newnotify.description,
+                extra=newnotify_data,
+            )
+
+        # APNS
+        device = APNSDevice.objects.filter(user_id=newnotify.recipient.id).first()
         if device:
             for key in newnotify_data.keys():
                 newnotify_data[key] = str(newnotify_data[key])
