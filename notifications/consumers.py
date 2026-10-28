@@ -46,7 +46,7 @@ class NotificationConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         if hasattr(self, 'user_key'):
-            self.channel_layer.group_discard(
+            async_to_sync(self.channel_layer.group_discard)(
                 self.user_key,
                 self.channel_name
             )

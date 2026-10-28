@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -28,6 +29,8 @@ from notifications.signals import notify
 from notifications.utils import id2slug
 
 from push_notifications.models import GCMDevice, APNSDevice
+
+logger = logging.getLogger(__name__)
 
 if parse_version(get_version()) >= parse_version('1.8.0'):
     from django.contrib.contenttypes.fields import GenericForeignKey  # noqa
@@ -394,36 +397,48 @@ def notify_handler(verb, **kwargs):
                 user_key += f"_{value}"
 
         newnotify_data = NotificationSerializer(newnotify).data
-        async_to_sync(channel_layer.group_send)(
-            user_key,
-            {
-                'type': 'notify',
-                'message': json.dumps(newnotify_data),
-            }
-        )
+
+        # Live delivery is best effort: the notification is already saved, so a Redis or FCM failure
+        # must not fail the caller's request or task (or skip the remaining recipients).
+        try:
+            async_to_sync(channel_layer.group_send)(
+                user_key,
+                {
+                    'type': 'notify',
+                    'message': json.dumps(newnotify_data),
+                }
+            )
+        except Exception:
+            logger.exception("WebSocket delivery failed for notification %s", newnotify.pk)
 
         # GCM
-        device = GCMDevice.objects.filter(user_id=newnotify.recipient.id).first()
-        if device:
+        devices = GCMDevice.objects.filter(user_id=newnotify.recipient.id, active=True)
+        if devices.exists():
+            # FCM data values must be strings
             for key in newnotify_data.keys():
-                newnotify_data[key] = str(newnotify_data[key])
+                value = newnotify_data[key]
+                newnotify_data[key] = "" if value is None else str(value)
 
-            device.send_message(
-                messaging.Message(
-                    notification=messaging.Notification(
-                        title=newnotify.verb,
-                        body=newnotify.description
-                    ),
-                    apns=messaging.APNSConfig(
-                        payload=messaging.APNSPayload(
-                            aps=messaging.Aps(
-                                sound="default",
-                                badge=1
+            try:
+                devices.send_message(
+                    messaging.Message(
+                        notification=messaging.Notification(
+                            title=newnotify.verb,
+                            body=newnotify.description
+                        ),
+                        data=newnotify_data,
+                        apns=messaging.APNSConfig(
+                            payload=messaging.APNSPayload(
+                                aps=messaging.Aps(
+                                    sound="default",
+                                    badge=1
+                                )
                             )
                         )
                     )
                 )
-            )
+            except Exception:
+                logger.exception("Push notification failed for notification %s", newnotify.pk)
 
         new_notifications.append(newnotify)
 

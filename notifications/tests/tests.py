@@ -7,6 +7,7 @@ Replace this with more appropriate tests for your application.
 # pylint: disable=too-many-lines,missing-docstring
 import json
 from datetime import timezone as dt_timezone
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -18,9 +19,11 @@ from django.test import Client, RequestFactory, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django.utils.timezone import localtime
+from firebase_admin import messaging
 from notifications.models import notify_handler
 from notifications.signals import notify
 from notifications.utils import id2slug
+from push_notifications.models import GCMDevice
 from swapper import load_model
 from notifications.tests.test_models.models import Customer, TargetObject
 
@@ -539,6 +542,43 @@ class NotificationTestExtraData(TestCase):
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(data['unread_list'][0]['data']['url'], "/learn/ask-a-pro/q/test-question-9/299/")
         self.assertEqual(data['unread_list'][0]['data']['other_content'], "Hello my 'world'")
+
+
+class NotificationPushTest(TestCase):
+    ''' Django notifications push delivery tests '''
+    def setUp(self):
+        self.from_user = User.objects.create(username="from", password="pwd", email="example@example.com")
+        self.to_user = User.objects.create(username="to", password="pwd", email="example@example.com")
+        GCMDevice.objects.create(user=self.to_user, registration_id="active-1", cloud_message_type="FCM")
+        GCMDevice.objects.create(user=self.to_user, registration_id="active-2", cloud_message_type="FCM")
+        GCMDevice.objects.create(
+            user=self.to_user, registration_id="inactive", cloud_message_type="FCM", active=False
+        )
+
+    @patch('push_notifications.gcm.send_message')
+    def test_push_sent_to_all_active_devices(self, mock_send):
+        mock_send.return_value = messaging.BatchResponse([])
+        notify.send(self.from_user, recipient=self.to_user, verb='commented', description='hi')
+        notification = Notification.objects.get(recipient=self.to_user)
+
+        mock_send.assert_called_once()
+        registration_ids, message = mock_send.call_args[0]
+        self.assertCountEqual(registration_ids, ["active-1", "active-2"])
+        self.assertEqual(message.notification.title, 'commented')
+        self.assertEqual(message.notification.body, 'hi')
+        self.assertEqual(message.apns.payload.aps.sound, 'default')
+        self.assertEqual(message.apns.payload.aps.badge, 1)
+        self.assertEqual(message.data['id'], str(notification.id))
+        self.assertTrue(all(isinstance(value, str) for value in message.data.values()))
+        self.assertNotIn('None', message.data.values())
+
+    @patch('push_notifications.gcm.send_message')
+    def test_push_failure_is_logged_not_raised(self, mock_send):
+        mock_send.side_effect = Exception("FCM down")
+        with self.assertLogs('notifications.models', level='ERROR') as logs:
+            notify.send(self.from_user, recipient=self.to_user, verb='commented')
+        self.assertTrue(any("Push notification failed" in line for line in logs.output))
+        self.assertEqual(Notification.objects.filter(recipient=self.to_user).count(), 1)
 
 
 class TagTest(TestCase):
